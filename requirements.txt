@@ -1,0 +1,26 @@
+# Data & numerical
+pandas
+numpy
+
+# Machine learning
+scikit-learn
+joblib
+
+# Visualization
+matplotlib
+seaborn
+
+# Web app
+streamlit
+
+# Claude API & config
+anthropic
+python-dotenv
+
+# Image processing
+opencv-python
+Pillow
+
+# OCR & text
+pytesseract
+textblob
