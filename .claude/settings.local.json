@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\mcchi\\\\Downloads\\\\brain-ad-scorer\\\\\" -Exclude venv | Select-Object Name, LastWriteTime; \"---\"; Get-ChildItem \"C:\\\\Users\\\\mcchi\\\\.claude\\\\projects\\\\C--Users-mcchi-Downloads-brain-ad-scorer\\\\\" | Sort-Object LastWriteTime -Descending | Select-Object -First 10 Name, LastWriteTime, Length)"
+    ]
+  }
+}
