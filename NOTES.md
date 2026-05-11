@@ -4,6 +4,42 @@ Updated after every step. Use this to review what was built and why.
 
 ---
 
+## Phase 1: Brain Profile + Data (in progress)
+
+### Steps 1.1 + 1.2 — Reference Material + Expert Persona Prompt ✅
+
+**What we built:**
+- `prompts/hormozi_brain.md` — the full "Master Ad Evaluation Engine" system prompt. Built on frameworks from Hormozi, Cialdini, Brunson, Suby, and Robinson. Includes a 10-step inference chain, detailed layer-by-layer analysis, a failure taxonomy of 24 ad-killers, and a scoring rubric. This becomes the system prompt for the Claude API labeling calls.
+- `prompts/scoring_rubric.md` — quick-reference schema showing the exact JSON Claude returns per ad, what each dimension means, and how they map to ML features.
+
+**What a persona prompt is:**
+A system prompt tells Claude "who it is" before it sees any user message. Instead of Claude responding as a general assistant, it responds as a direct response marketing strategist who has internalized these specific frameworks. The quality of the labels depends entirely on how well-designed this prompt is — garbage in, garbage out.
+
+**The 10 scoring dimensions (our ML features):**
+```
+hook_power         → Does the first 3 seconds stop the scroll?
+offer_strength     → Hormozi Value Equation: dream outcome × proof / time × effort
+persuasion_depth   → How many Cialdini principles are layered?
+narrative_emotion  → Is there a story + identity shift (Brunson Epiphany Bridge)?
+structure_flow     → Hook-Body-CTA: is there a single clear through-line?
+cta_clarity        → Is the ask specific, single, and proportional to funnel stage?
+audience_targeting → Does it speak to one person, or everyone (= no one)?
+funnel_fit         → Right message for the traffic temperature (cold/warm/hot)?
+platform_optimization → Is it native to Meta/YouTube/TikTok behavior?
+overall_impact     → Expert's final verdict (this is our ML target variable)
+```
+
+**Why we use these instead of visual features:**
+The original plan was to extract color brightness, word count, sentiment, etc. and predict a score from those. We scrapped it because Hormozi rates messaging quality — not pixel aesthetics. A bright red button doesn't make an ad good. The hook text does. These 10 dimensions capture the actual decision-making criteria.
+
+**What's next in Phase 1:**
+- Step 1.3: Decide regression vs classification
+- Step 1.4: Collect 80-100 real ad images (your job)
+- Step 1.5: Build `scripts/label_ads.py` to auto-label them via Claude API
+- Step 1.6: Spot-check labels, finalize CSV schema
+
+---
+
 ## Phase 0: Environment Setup ✅
 
 ### What this phase was about
