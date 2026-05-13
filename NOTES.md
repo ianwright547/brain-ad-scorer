@@ -32,11 +32,86 @@ overall_impact     → Expert's final verdict (this is our ML target variable)
 **Why we use these instead of visual features:**
 The original plan was to extract color brightness, word count, sentiment, etc. and predict a score from those. We scrapped it because Hormozi rates messaging quality — not pixel aesthetics. A bright red button doesn't make an ad good. The hook text does. These 10 dimensions capture the actual decision-making criteria.
 
-**What's next in Phase 1:**
-- Step 1.3: Decide regression vs classification
-- Step 1.4: Collect 80-100 real ad images (your job)
-- Step 1.5: Build `scripts/label_ads.py` to auto-label them via Claude API
-- Step 1.6: Spot-check labels, finalize CSV schema
+---
+
+### Step 1.3 — Regression vs Classification ✅
+
+**Decision: Regression.** The model predicts `overall_impact` as a float (1.0–10.0).
+
+**Why not classification?**
+Bucketing scores (Low/Medium/High) loses information. A 4.8 and a 6.9 both become "Medium" — the model can never recover that distinction. Regression preserves every point Claude scored.
+
+**The interview answer:** "I framed it as regression because the target variable is a continuous expert score. Classification would have required me to invent arbitrary buckets and throw away signal."
+
+**Class balance in regression:** Even in regression, you need score *range coverage* in your training data. If every ad scores 6–8, the model learns to predict ~7 for everything. You need weak ads (2–4), average (5–7), strong (7–8), and exceptional (9–10) so the model learns the full relationship.
+
+---
+
+### Step 1.4 — Synthetic Data Generation ✅
+
+**What is synthetic data?**
+Data that an AI generates rather than data collected from the real world. Valid when: (a) you can't easily collect real data, and (b) the generator understands the domain well enough to produce realistic examples.
+
+Here, Claude generates ad copy at different quality levels — then a separate Claude call scores it. The dataset is artificial but the scoring is grounded in real frameworks (Hormozi, Cialdini, Brunson).
+
+**Why two API calls instead of one?**
+- One call = Claude generates AND scores its own output → bias (rates itself too high) and confusion (two jobs in one prompt = worse at both)
+- Two calls = generate first, score second → cleaner separation, more honest scores
+
+**The interview answer:** "I used synthetic data because sourcing and labeling 90 real ads would have taken weeks. Claude generates ads at specified quality levels, then a separate Claude call scores them using the expert framework as a system prompt. Two calls prevents the model from rating its own output."
+
+---
+
+### Step 1.5 — label_ads.py ✅
+
+**What the script does:**
+1. Loops 90 times
+2. Call 1 → Claude writes ad copy (quality tier + business type + platform specified)
+3. Call 2 → Claude scores the ad using the Hormozi framework → returns JSON
+4. Parses the JSON into a flat row of numbers
+5. Saves all rows to `data/labeled/ads_labeled.csv`
+
+**Key concepts in the script:**
+
+**System prompt vs user message:**
+- System prompt = Claude's identity/instructions ("you are an expert ad evaluator, return only JSON...")
+- User message = the actual ad copy being evaluated
+- The system prompt stays the same for all 90 scoring calls. Only the ad copy changes.
+
+**Why `time.sleep(1)`?**
+APIs have rate limits — max requests per minute. Firing 180 calls with no pause gets you rejected. One second between calls keeps you under the limit.
+
+**Why parse JSON?**
+Claude returns text. We need numbers. `json.loads()` converts the text `{"hook_power": 7}` into a Python dictionary you can actually do math on. The ML model trains on numbers, not strings.
+
+**What goes into the CSV:**
+- 9 dimension scores (features / X)
+- `overall_impact` (target / y)
+- `ad_copy` (text — not a feature, used for app display)
+- `quality_tier`, `business_type`, `platform`, `verdict` (metadata)
+
+**The interview answer:** "The labeling script makes two API calls per ad — one to generate, one to score. It saves 90 rows to a CSV where each row has 9 expert-graded dimension scores as features and overall_impact as the target. That CSV is what the ML model trains on."
+
+---
+
+### The Big Picture So Far
+
+```
+PDF framework (Hormozi/Cialdini/Brunson)
+        ↓
+System prompt in Claude (hormozi_brain.md)
+        ↓
+label_ads.py: generate 90 ads → score each → CSV
+        ↓
+data/labeled/ads_labeled.csv
+        ↓ (Phase 3)
+scikit-learn trains on (9 dimensions → overall_impact)
+        ↓ (Phase 4)
+Streamlit app: user pastes ad → Claude scores dimensions → model predicts impact
+```
+
+**Why this is a strong portfolio project:**
+Most ML projects use pre-built datasets from Kaggle. This one has a custom labeled dataset built with a real expert framework, a clear business use case, and a head-to-head model vs. Claude comparison. That's a story, not just code.
 
 ---
 
