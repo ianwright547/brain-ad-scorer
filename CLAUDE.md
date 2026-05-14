@@ -6,25 +6,27 @@ This file is loaded at the start of every Claude Code session in this folder. It
 
 ML model that scores marketing ads using Alex Hormozi's frameworks, deployed as a Streamlit web app. 2-week timeline. Resume + learning project for the user (newer to ML, comfortable with code).
 
-## Architecture — Path A (locked 2026-05-10)
+## Architecture — Path A (updated 2026-05-14)
 
 ```
 Reference material (Hormozi books, frameworks)
         ↓
 Persona prompt (prompts/hormozi_brain.md)
         ↓
-Claude API grades each ad → JSON with:
-  - overall_score (1-10)
-  - expert dimensions: hook_quality, offer_clarity, specificity,
-    curiosity_gap, risk_reversal, urgency, cta_strength, audience_callout
+Claude API grades each ad → JSON with 9 dimensions + overall_impact
         ↓
-scikit-learn model trains on (dimensions → overall_score)
+scikit-learn Random Forest trains on (9 dimensions → overall_impact)
         ↓
-Streamlit app: user uploads ad → Claude grades dimensions →
-local model produces final score + explanation
+Streamlit app:
+  - User pastes ad copy OR uploads video
+  - If video: extract audio → Whisper transcription → use transcript as ad copy
+  - Claude grades the 9 dimensions
+  - Local model predicts overall_impact + explanation
 ```
 
-Visual/OCR features (color, sentiment, face detection, etc.) are still extracted in Phase 2 as **supplementary** features for portfolio breadth — they are NOT the primary signal. The original plan had them as primary; we pivoted on 2026-05-10 because shallow visual features don't correlate with what Hormozi actually rates (messaging quality), and the model would have lost badly to Claude in the head-to-head comparison step.
+**Deploy: Streamlit Cloud** (free, deploys from GitHub). Not Vercel/React — user has no JS experience, shipping complete on Streamlit is the right call for this project.
+
+**Video transcript** is a Phase 4 stretch feature. Uses Whisper (OpenAI) or similar to extract transcript from uploaded video, then feeds transcript to Claude for scoring. Adds realism since most real ads are video.
 
 ## Coaching rules
 

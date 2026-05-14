@@ -4,7 +4,8 @@
       "PowerShell(Get-ChildItem \"C:\\\\Users\\\\mcchi\\\\Downloads\\\\brain-ad-scorer\\\\\" -Exclude venv | Select-Object Name, LastWriteTime; \"---\"; Get-ChildItem \"C:\\\\Users\\\\mcchi\\\\.claude\\\\projects\\\\C--Users-mcchi-Downloads-brain-ad-scorer\\\\\" | Sort-Object LastWriteTime -Descending | Select-Object -First 10 Name, LastWriteTime, Length)",
       "PowerShell(& \"C:\\\\Users\\\\mcchi\\\\Downloads\\\\brain-ad-scorer\\\\venv\\\\Scripts\\\\python.exe\" -c \"import pandas; print\\(pandas.__version__\\)\")",
       "PowerShell(& \"C:\\\\Users\\\\mcchi\\\\Downloads\\\\brain-ad-scorer\\\\venv\\\\Scripts\\\\python.exe\" \"C:\\\\Users\\\\mcchi\\\\Downloads\\\\brain-ad-scorer\\\\scripts\\\\label_ads.py\" 2>&1)",
-      "PowerShell(Import-Csv *)"
+      "PowerShell(Import-Csv *)",
+      "Bash(git push *)"
     ]
   }
 }
