@@ -1,12 +1,12 @@
 # Brain Ad Scorer
 
-ML model that scores marketing ads using Alex Hormozi's frameworks, deployed as a Streamlit web app.
+ML model that scores marketing ads using Marketing frameworks, deployed as a Streamlit web app.
 
 > Status: Work in progress — 2-week portfolio build.
 
 ## How it works
 
-1. A persona prompt encodes how Hormozi evaluates ads (hooks, offers, specificity, curiosity gaps, etc.).
+1. A persona prompt encodes how Top Marketers evaluates ads (hooks, offers, specificity, curiosity gaps, etc.).
 2. The Claude API uses that persona to grade each ad on structured **expert dimensions** (`hook_quality`, `offer_clarity`, `specificity`, `curiosity_gap`, `risk_reversal`, `urgency`, `cta_strength`, `audience_callout`) plus an overall score.
 3. A scikit-learn model is trained on `(expert dimensions → overall score)` — learning the expert's weighting function.
 4. The Streamlit app takes a new ad, calls Claude to grade its dimensions, then runs the local model to produce a final score with explanation.
