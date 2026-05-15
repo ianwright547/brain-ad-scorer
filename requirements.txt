@@ -4,23 +4,16 @@ numpy
 
 # Machine learning
 scikit-learn
+xgboost
 joblib
 
 # Visualization
 matplotlib
-seaborn
 
-# Web app
-streamlit
+# API
+fastapi
+uvicorn[standard]
 
 # Claude API & config
 anthropic
 python-dotenv
-
-# Image processing
-opencv-python
-Pillow
-
-# OCR & text
-pytesseract
-textblob

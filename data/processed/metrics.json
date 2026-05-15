@@ -1,0 +1,14 @@
+{
+  "random_forest": {
+    "mae": 0.173,
+    "r2": 0.992
+  },
+  "xgboost": {
+    "mae": 0.162,
+    "r2": 0.991
+  },
+  "agreement_within_1pt": 100.0,
+  "agreement_within_0.5pt": 88.9,
+  "test_size": 18,
+  "train_size": 72
+}
