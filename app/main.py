@@ -1,7 +1,7 @@
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import joblib
 import anthropic
 import json
@@ -39,7 +39,7 @@ FEATURES = [
 
 
 class ScoreRequest(BaseModel):
-    ad_copy: str
+    ad_copy: str = Field(..., min_length=1)
 
 
 def call_claude(ad_copy, retries=2):
