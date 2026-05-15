@@ -14,7 +14,8 @@ env/
 .env
 
 # Data files (large/binary)
-data/raw/
+data/raw/*.csv
+data/raw/*.json
 
 # IDE
 .vscode/

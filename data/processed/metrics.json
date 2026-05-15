@@ -7,6 +7,21 @@
     "mae": 0.162,
     "r2": 0.991
   },
+  "cross_validation": {
+    "folds": 5,
+    "random_forest": {
+      "mae_mean": 0.317,
+      "mae_std": 0.131,
+      "r2_mean": 0.543,
+      "r2_std": 0.44
+    },
+    "xgboost": {
+      "mae_mean": 0.312,
+      "mae_std": 0.199,
+      "r2_mean": 0.526,
+      "r2_std": 0.407
+    }
+  },
   "agreement_within_1pt": 100.0,
   "agreement_within_0.5pt": 88.9,
   "test_size": 18,

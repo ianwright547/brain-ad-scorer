@@ -22,6 +22,8 @@ Ad copy (user input)
 
 ## Model Performance
 
+### Holdout set (20% split)
+
 | Metric | Random Forest | XGBoost |
 |---|---|---|
 | MAE | 0.17 | 0.16 |
@@ -29,7 +31,14 @@ Ad copy (user input)
 | Within 1 pt of Claude | 100% | — |
 | Within 0.5 pt of Claude | 89% | — |
 
-Evaluated on a held-out test set of 18 ads (20% split, `random_state=42`).
+### 5-fold cross-validation
+
+| Metric | Random Forest | XGBoost |
+|---|---|---|
+| MAE | 0.32 +/- 0.13 | 0.31 +/- 0.20 |
+| R² | 0.54 +/- 0.44 | 0.53 +/- 0.41 |
+
+The gap between holdout R² (0.99) and cross-val R² (0.54) shows the single train/test split was overly optimistic. With 90 data points, fold composition has outsized impact on performance. This is expected and motivates expanding the dataset with real ads — more data will stabilize cross-val scores and give a more honest picture of generalization.
 
 ![Feature Importance](data/processed/feature_importance.png)
 
@@ -91,7 +100,15 @@ npm run dev
 
 ## Tech Stack
 
-Python 3.11 · scikit-learn · XGBoost · FastAPI · Anthropic Claude API · React · Vite
+Python 3.11 · scikit-learn · XGBoost · FastAPI · Anthropic Claude API · React · Vite · pytest
+
+## Testing
+
+```bash
+python -m pytest tests/ -v
+```
+
+3 tests covering the `/score` endpoint: valid response shape, input validation (empty string → 422), and dimension key completeness. Claude API calls are mocked so tests run without API keys.
 
 ## Project Structure
 
