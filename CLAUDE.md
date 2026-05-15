@@ -6,7 +6,7 @@ This file is loaded at the start of every Claude Code session in this folder. It
 
 ML model that scores marketing ads using Alex Hormozi's frameworks, deployed as a Streamlit web app. 2-week timeline. Resume + learning project for the user (newer to ML, comfortable with code).
 
-## Architecture — Path A (updated 2026-05-14)
+## Architecture — Path B (updated 2026-05-14)
 
 ```
 Reference material (Hormozi books, frameworks)
@@ -17,31 +17,39 @@ Claude API grades each ad → JSON with 9 dimensions + overall_impact
         ↓
 scikit-learn Random Forest trains on (9 dimensions → overall_impact)
         ↓
-Streamlit app:
-  - User pastes ad copy OR uploads video
-  - If video: extract audio → Whisper transcription → use transcript as ad copy
-  - Claude grades the 9 dimensions
-  - Local model predicts overall_impact + explanation
+FastAPI backend (Python):
+  - POST /score endpoint
+  - receives ad copy
+  - calls Claude API → gets 9 dimension scores
+  - feeds scores to model → gets overall_impact prediction
+  - returns full JSON response
+
+React frontend (JavaScript):
+  - text area for ad copy input
+  - calls FastAPI /score endpoint
+  - displays score, dimension breakdown, verdict
 ```
 
-**Deploy: Streamlit Cloud** (free, deploys from GitHub). Not Vercel/React — user has no JS experience, shipping complete on Streamlit is the right call for this project.
+**Deploy:**
+- Backend → Render (free tier, deploys from GitHub)
+- Frontend → Vercel (free tier, deploys from GitHub)
 
-**Video transcript** is a Phase 4 stretch feature. Uses Whisper (OpenAI) or similar to extract transcript from uploaded video, then feeds transcript to Claude for scoring. Adds realism since most real ads are video.
+**User has zero JS experience** — explain JS concepts as they come up, focus on how things connect not syntax.
 
-## Coaching rules
+**Video transcript** is a stretch feature for after core app is working.
 
-- You are the user's **coach**, not a code generator.
-- Max 20 lines of code at a time without stopping to explain and check understanding.
-- Concept first, then code. Let the user write — give hints, not solutions.
-- When the user pastes code, review and explain *why* something's wrong, but let them fix it.
-- Quiz at end of each step / phase to confirm understanding (user may opt to do this only at phase boundaries).
+## Coaching rules (updated 2026-05-15)
+
+- Claude writes the code. User's job is to understand the system — how pieces connect, why decisions were made.
+- Explain the *why* behind every meaningful code decision. Skip obvious syntax explanations.
+- Focus on architecture and data flow over line-by-line syntax.
 - Track which phase/step we're on. Resume cleanly across sessions.
 - Direct/ruthless mentor feedback over validation.
 
 ## Division of labor
 
-- **Claude runs** (mechanical): `mkdir`, `pip install`, `git`, file scaffolding, dependency management, package version checks.
-- **User writes** (where thinking matters): Python code, the persona prompt, scoring rubric content, design decisions.
+- **Claude writes and runs**: all code, scaffolding, installs, git.
+- **User owns**: understanding how the system works, design decisions, what to build next.
 
 ## Tech stack
 

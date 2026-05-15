@@ -5,7 +5,15 @@
       "PowerShell(& \"C:\\\\Users\\\\mcchi\\\\Downloads\\\\brain-ad-scorer\\\\venv\\\\Scripts\\\\python.exe\" -c \"import pandas; print\\(pandas.__version__\\)\")",
       "PowerShell(& \"C:\\\\Users\\\\mcchi\\\\Downloads\\\\brain-ad-scorer\\\\venv\\\\Scripts\\\\python.exe\" \"C:\\\\Users\\\\mcchi\\\\Downloads\\\\brain-ad-scorer\\\\scripts\\\\label_ads.py\" 2>&1)",
       "PowerShell(Import-Csv *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(java -version)",
+      "Bash(javac -version)",
+      "PowerShell(java *)",
+      "Bash(java --version)",
+      "Bash(javac --version)",
+      "Bash(venv\\\\Scripts\\\\pip install *)",
+      "PowerShell(.\\\\venv\\\\Scripts\\\\pip install fastapi uvicorn 2>&1 | Select-Object -Last 5)",
+      "PowerShell(.\\\\venv\\\\Scripts\\\\pip install \"uvicorn[standard]\" 2>&1 | Select-Object -Last 3)"
     ]
   }
 }
