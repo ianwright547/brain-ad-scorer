@@ -2,32 +2,68 @@ import { useState } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 
-const DIMENSION_LABELS = {
-  hook_power: 'Hook Power',
-  offer_strength: 'Offer Strength',
-  persuasion_depth: 'Persuasion Depth',
-  narrative_emotion: 'Narrative & Emotion',
-  structure_flow: 'Structure & Flow',
-  cta_clarity: 'CTA Clarity',
-  audience_targeting: 'Audience Targeting',
-  funnel_fit: 'Funnel Fit',
-  platform_optimization: 'Platform Optimization',
-}
+const DIMENSIONS = [
+  ['hook_power', 'Hook Power'],
+  ['offer_strength', 'Offer Strength'],
+  ['persuasion_depth', 'Persuasion Depth'],
+  ['narrative_emotion', 'Narrative & Emotion'],
+  ['structure_flow', 'Structure & Flow'],
+  ['cta_clarity', 'CTA Clarity'],
+  ['audience_targeting', 'Audience Targeting'],
+  ['funnel_fit', 'Funnel Fit'],
+  ['platform_optimization', 'Platform Optimization'],
+]
 
 function ScoreBar({ label, value }) {
   const pct = (value / 10) * 100
-  const color = value >= 8 ? '#22c55e' : value >= 6 ? '#f59e0b' : '#ef4444'
   return (
-    <div style={{ marginBottom: '12px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <span style={{ fontSize: '14px', color: '#d1d5db' }}>{label}</span>
-        <span style={{ fontSize: '14px', fontWeight: 'bold', color }}>{value}/10</span>
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+        <span style={{ fontSize: 13, color: '#656d76' }}>{label}</span>
+        <span style={{ fontSize: 13, fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#1f2328' }}>{value}</span>
       </div>
-      <div style={{ background: '#374151', borderRadius: '4px', height: '8px' }}>
-        <div style={{ width: `${pct}%`, background: color, borderRadius: '4px', height: '8px', transition: 'width 0.6s ease' }} />
+      <div style={{ background: '#eaeef2', borderRadius: 3, height: 6, overflow: 'hidden' }}>
+        <div
+          style={{
+            width: `${pct}%`,
+            height: 6,
+            borderRadius: 3,
+            transition: 'width 0.5s ease',
+            background: value >= 8 ? '#1a7f37' : value >= 6 ? '#9a6700' : '#cf222e',
+          }}
+        />
       </div>
     </div>
   )
+}
+
+function ScoreCard({ value, label, sublabel, color }) {
+  return (
+    <div style={{
+      flex: 1,
+      border: '1px solid #d0d7de',
+      borderRadius: 6,
+      padding: '16px 12px',
+      textAlign: 'center',
+    }}>
+      <div style={{
+        fontSize: 32,
+        fontWeight: 700,
+        fontFamily: 'ui-monospace, monospace',
+        color,
+      }}>
+        {value}
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: '#1f2328', marginTop: 2 }}>{label}</div>
+      {sublabel && <div style={{ fontSize: 11, color: '#656d76', marginTop: 1 }}>{sublabel}</div>}
+    </div>
+  )
+}
+
+function getScoreColor(v) {
+  if (v >= 8) return '#1a7f37'
+  if (v >= 6) return '#9a6700'
+  return '#cf222e'
 }
 
 export default function App() {
@@ -43,86 +79,138 @@ export default function App() {
     setResult(null)
 
     try {
-      const response = await fetch(`${API_URL}/score`, {
+      const res = await fetch(`${API_URL}/score`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ad_copy: adCopy }),
       })
-      if (!response.ok) throw new Error('Scoring failed')
-      const data = await response.json()
-      setResult(data)
-    } catch (err) {
+      if (!res.ok) throw new Error('Request failed')
+      setResult(await res.json())
+    } catch {
       setError('Could not reach the scoring API. Is the backend running?')
     } finally {
       setLoading(false)
     }
   }
 
-  const impactColor = result
-    ? result.overall_impact >= 8 ? '#22c55e' : result.overall_impact >= 6 ? '#f59e0b' : '#ef4444'
-    : '#fff'
-
   return (
-    <div style={{ minHeight: '100vh', background: '#111827', color: '#f9fafb', fontFamily: 'system-ui, sans-serif', padding: '40px 20px' }}>
-      <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+    <div>
+      <header style={{ marginBottom: 32 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 600, color: '#1f2328', marginBottom: 4 }}>
+          ML Ad Scorer
+        </h1>
+        <p style={{ fontSize: 14, color: '#656d76', lineHeight: 1.6 }}>
+          Evaluates ad copy across 9 persuasion dimensions using an LLM, then compares
+          predictions from a Random Forest, XGBoost, and the LLM's own score.
+        </p>
+      </header>
 
-        <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>Brain Ad Scorer</h1>
-        <p style={{ color: '#9ca3af', marginBottom: '32px' }}>Scores your ad copy using Hormozi's framework + a trained ML model.</p>
+      <textarea
+        value={adCopy}
+        onChange={e => setAdCopy(e.target.value)}
+        placeholder="Paste your ad copy here..."
+        rows={8}
+        style={{
+          width: '100%',
+          padding: '10px 12px',
+          fontSize: 14,
+          fontFamily: 'inherit',
+          border: '1px solid #d0d7de',
+          borderRadius: 6,
+          resize: 'vertical',
+          outline: 'none',
+          color: '#1f2328',
+          background: '#ffffff',
+        }}
+        onFocus={e => (e.target.style.borderColor = '#0969da')}
+        onBlur={e => (e.target.style.borderColor = '#d0d7de')}
+      />
 
-        <textarea
-          value={adCopy}
-          onChange={e => setAdCopy(e.target.value)}
-          placeholder="Paste your ad copy here..."
-          style={{
-            width: '100%', minHeight: '180px', background: '#1f2937', border: '1px solid #374151',
-            borderRadius: '8px', padding: '16px', color: '#f9fafb', fontSize: '15px',
-            resize: 'vertical', boxSizing: 'border-box', outline: 'none',
-          }}
-        />
+      <button
+        onClick={handleScore}
+        disabled={loading || !adCopy.trim()}
+        style={{
+          marginTop: 12,
+          padding: '9px 20px',
+          fontSize: 14,
+          fontWeight: 600,
+          fontFamily: 'inherit',
+          color: '#ffffff',
+          background: loading ? '#8c959f' : '#0969da',
+          border: '1px solid rgba(27,31,36,0.15)',
+          borderRadius: 6,
+          cursor: loading ? 'default' : 'pointer',
+          opacity: !adCopy.trim() ? 0.5 : 1,
+        }}
+      >
+        {loading ? 'Scoring...' : 'Score ad'}
+      </button>
 
-        <button
-          onClick={handleScore}
-          disabled={loading || !adCopy.trim()}
-          style={{
-            marginTop: '16px', width: '100%', padding: '14px', background: loading ? '#374151' : '#6366f1',
-            color: '#fff', border: 'none', borderRadius: '8px', fontSize: '16px',
-            fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {loading ? 'Scoring...' : 'Score This Ad'}
-        </button>
+      {error && (
+        <div style={{
+          marginTop: 16,
+          padding: '12px 16px',
+          fontSize: 13,
+          color: '#cf222e',
+          background: '#ffebe9',
+          border: '1px solid rgba(255,129,130,0.4)',
+          borderRadius: 6,
+        }}>
+          {error}
+        </div>
+      )}
 
-        {error && (
-          <div style={{ marginTop: '24px', background: '#450a0a', border: '1px solid #ef4444', borderRadius: '8px', padding: '16px', color: '#fca5a5' }}>
-            {error}
+      {result && (
+        <div style={{ marginTop: 32 }}>
+
+          <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+            <ScoreCard
+              value={result.rf_score}
+              label="Random Forest"
+              sublabel="ML prediction"
+              color={getScoreColor(result.rf_score)}
+            />
+            <ScoreCard
+              value={result.xgb_score}
+              label="XGBoost"
+              sublabel="ML prediction"
+              color={getScoreColor(result.xgb_score)}
+            />
+            <ScoreCard
+              value={result.claude_score}
+              label="Claude"
+              sublabel="LLM raw score"
+              color={getScoreColor(result.claude_score)}
+            />
           </div>
-        )}
 
-        {result && (
-          <div style={{ marginTop: '32px' }}>
-            <div style={{ background: '#1f2937', borderRadius: '12px', padding: '24px', marginBottom: '24px', textAlign: 'center' }}>
-              <div style={{ fontSize: '56px', fontWeight: 'bold', color: impactColor }}>
-                {result.overall_impact}
-              </div>
-              <div style={{ color: '#9ca3af', fontSize: '14px', marginTop: '4px' }}>Model Score / 10</div>
-              <div style={{ marginTop: '12px', fontSize: '18px', fontWeight: '600', color: impactColor }}>
-                {result.verdict}
-              </div>
-              <div style={{ color: '#6b7280', fontSize: '13px', marginTop: '4px' }}>
-                Claude raw score: {result.claude_score}/10
-              </div>
-            </div>
-
-            <div style={{ background: '#1f2937', borderRadius: '12px', padding: '24px' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px', color: '#e5e7eb' }}>Dimension Breakdown</h2>
-              {Object.entries(DIMENSION_LABELS).map(([key, label]) => (
-                <ScoreBar key={key} label={label} value={result.scores[key]} />
-              ))}
-            </div>
+          <div style={{
+            padding: '12px 16px',
+            marginBottom: 24,
+            border: '1px solid #d0d7de',
+            borderRadius: 6,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <span style={{ fontSize: 13, color: '#656d76' }}>Verdict</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#1f2328' }}>{result.verdict}</span>
           </div>
-        )}
 
-      </div>
+          <div style={{
+            border: '1px solid #d0d7de',
+            borderRadius: 6,
+            padding: '20px 24px',
+          }}>
+            <h2 style={{ fontSize: 14, fontWeight: 600, color: '#1f2328', marginBottom: 16 }}>
+              Dimension breakdown
+            </h2>
+            {DIMENSIONS.map(([key, label]) => (
+              <ScoreBar key={key} label={label} value={result.scores[key]} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
