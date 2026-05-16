@@ -1,48 +1,43 @@
-# ML Ad Scorer
+# Ad Profitability Scorer
 
-Scores ad copy across 9 persuasion dimensions using an LLM evaluator, then compares predictions from two ML models (Random Forest, XGBoost) against the LLM's own score.
+Scores ad copy across 12 persuasion/conversion dimensions using an LLM evaluator, calculates profitability against your unit economics, and returns a RUN / FIX FIRST / DON'T RUN verdict.
 
 ## Architecture
 
 ```
-Ad copy (user input)
-  │
-  ├─► Claude API + expert persona prompt
-  │     → scores 9 dimensions (hook power, offer strength, etc.)
-  │
-  ├─► Random Forest model ──► prediction
-  ├─► XGBoost model ────────► prediction
-  │
-  └─► Returns all three: RF prediction, XGBoost prediction, Claude raw score
+User inputs:
+  ├── Ad copy / video transcript
+  ├── Business type (e-commerce or lead gen)
+  └── Unit economics (price, cost, close rate, ad budget)
+        │
+        ▼
+  ┌─────────────────────────────────────────────┐
+  │  Claude API + expert persona prompt         │
+  │  → detects context (niche, audience, style) │
+  │  → scores 12 dimensions (context-relative)  │
+  │  → returns strengths, weaknesses, fixes     │
+  └─────────────────────────────────────────────┘
+        │
+        ├─► Random Forest model ──► prediction
+        ├─► XGBoost model ────────► prediction
+        │
+        ├─► Break-even math (CPA/CPL calculation)
+        ├─► Profitability assessment
+        │
+        └─► Final verdict: RUN / FIX FIRST / DON'T RUN
 ```
 
-**Frontend** — React (Vite), deployed on Vercel  
-**Backend** — FastAPI, deployed on Render  
-**Models** — scikit-learn `RandomForestRegressor` + `XGBRegressor`, trained on 90 LLM-labeled ads
+**Frontend** — React (Vite), deployed on Vercel
+**Backend** — FastAPI, deployed on Render
+**Models** — scikit-learn `RandomForestRegressor` + `XGBRegressor`
 
-## Model Performance
+## What Makes This Different
 
-### Holdout set (20% split)
+**Context-relative scoring.** A raw UGC testimonial isn't penalized for lacking polished structure — if raw authenticity IS the strategy, it's scored on how well it executes that strategy. A $47 product ad isn't held to the same narrative standard as a $10k coaching offer. The system detects the ad's context (niche, audience temperature, ad style, funnel position) and evaluates relative to its job.
 
-| Metric | Random Forest | XGBoost |
-|---|---|---|
-| MAE | 0.17 | 0.16 |
-| R² | 0.99 | 0.99 |
-| Within 1 pt of Claude | 100% | — |
-| Within 0.5 pt of Claude | 89% | — |
+**Profitability layer.** Input your unit economics and the system calculates whether the ad can realistically be profitable — not just whether the copy is "good." Break-even CPA, estimated acquisition cost range, margin of safety, and monthly conversion projections.
 
-### 5-fold cross-validation
-
-| Metric | Random Forest | XGBoost |
-|---|---|---|
-| MAE | 0.32 +/- 0.13 | 0.31 +/- 0.20 |
-| R² | 0.54 +/- 0.44 | 0.53 +/- 0.41 |
-
-The gap between holdout R² (0.99) and cross-val R² (0.54) shows the single train/test split was overly optimistic. With 90 data points, fold composition has outsized impact on performance. This is expected and motivates expanding the dataset with real ads — more data will stabilize cross-val scores and give a more honest picture of generalization.
-
-![Feature Importance](data/processed/feature_importance.png)
-
-![Model vs Claude Comparison](data/processed/model_comparison.png)
+**Actionable output.** Not just a score — red flags, top strengths, specific weaknesses, and priority fixes tied to frameworks (Hormozi, Cialdini, Brunson, Suby).
 
 ## Scoring Dimensions
 
@@ -57,33 +52,36 @@ The gap between holdout R² (0.99) and cross-val R² (0.54) shows the single tra
 | Audience Targeting | Speaks to one person, not everyone |
 | Funnel Fit | Message matched to traffic temperature |
 | Platform Optimization | Native to the ad platform's behavior |
+| Conversion Likelihood | Will someone actually act after seeing this? |
+| Message-Market Match | Does messaging hit what this market cares about? |
+| Ad Type Execution | How well does it execute its chosen format? |
 
 ## Design Decisions
 
-**Why LLM-extracted features instead of visual/NLP features?**  
-The original plan was to train on surface-level features: word count, sentiment, color brightness. We scrapped it because the scoring framework evaluates *messaging quality* — hook strength, offer clarity, specificity. A bright CTA button doesn't make an ad good. Training on pixel-level features would teach the model to find noise, not expertise. Using the LLM to extract expert-graded dimensions gives the model features that actually correlate with ad quality as defined by the framework.
+**Why context-relative scoring?**
+A scrappy iPhone testimonial and a polished 2-minute VSL can both perform well — for different audiences, offers, and funnel stages. Scoring them on the same absolute scale produces meaningless comparisons. The system detects context first, then evaluates execution quality within that context.
 
-**Why two API calls during labeling instead of one?**  
-One call where Claude generates and scores its own ad introduces self-rating bias — it rates its own output too favorably. Two calls (generate, then score separately) create cleaner separation. The scoring call uses a fixed persona prompt and evaluates the ad cold, the same way it would evaluate a real ad.
+**Why profitability math instead of CTR prediction?**
+We don't have real ad platform metrics and don't pretend to. Instead, we flip the question: given your margins, what CPA do you NEED? Given the ad's conversion quality score, is that CPA realistic? This is honest and actually useful — it's what a media buyer thinks about before launching.
 
-**Why regression instead of classification?**  
-Bucketing scores into Low/Medium/High throws away signal. A 4.8 and a 6.9 both become "Medium" and the model can never recover that distinction. Regression preserves the full continuous score range.
+**Why 12 dimensions instead of 9?**
+The original 9 dimensions measure copy quality. The 3 new dimensions (`conversion_likelihood`, `message_market_match`, `ad_type_execution`) measure whether the ad will actually WORK in context. An ad can score 9/10 on structure and still fail because it uses the wrong language for its market.
 
-**Why two models?**  
-Random Forest and XGBoost learn differently. RF averages independent decision trees; XGBoost builds trees sequentially where each corrects the previous one's errors. Showing both predictions demonstrates model comparison methodology and lets the user see where they agree or diverge on a given ad.
+**Why two ML models?**
+Random Forest averages independent decision trees; XGBoost builds trees sequentially where each corrects the previous one's errors. Showing both demonstrates model comparison methodology and surfaces where they agree or diverge.
 
 ## How the Pipeline Works
 
-1. **Persona prompt** (`prompts/hormozi_brain.md`) — encodes expert-level ad evaluation criteria from Hormozi, Cialdini, Brunson, and direct response frameworks.
-2. **Label generation** (`scripts/label_ads.py`) — two-call architecture: Claude generates synthetic ads at varying quality levels, then a separate Claude call scores each one.
-3. **Model training** (`scripts/train_model.py`) — trains both Random Forest and XGBoost on `(9 dimensions → overall_impact)`. Outputs metrics, feature importance charts, and model comparison visualizations.
-4. **Inference** (`app/main.py`) — FastAPI receives ad copy, calls Claude for dimension scores, feeds them to both models, returns all three scores with retry logic.
+1. **Persona prompt** (`prompts/hormozi_brain.md`) — expert-level ad evaluation encoding frameworks from Hormozi, Cialdini, Brunson, Suby, and Robinson.
+2. **Label generation** (`scripts/label_real_ads.py`) — sends real ad transcripts to Claude for context-aware scoring across all 12 dimensions.
+3. **Model training** (`scripts/train_model.py`) — trains both RF and XGBoost on `(12 dimensions → overall_impact)`. Outputs metrics, feature importance, and comparison charts.
+4. **Inference** (`app/main.py`) — FastAPI receives ad copy + business inputs, calls Claude for scores, feeds to models, calculates profitability, returns full analysis with run verdict.
 
 ## Running Locally
 
 ```bash
-git clone https://github.com/<your-username>/ml-ad-scorer.git
-cd ml-ad-scorer
+git clone https://github.com/<your-username>/brain-ad-scorer.git
+cd brain-ad-scorer
 
 # Backend
 python -m venv venv
@@ -98,9 +96,11 @@ npm install
 npm run dev
 ```
 
-## Tech Stack
+## Labeling Real Ads
 
-Python 3.11 · scikit-learn · XGBoost · FastAPI · Anthropic Claude API · React · Vite · pytest
+1. Paste video transcripts into `data/raw/real_ads.txt` separated by `--- AD ---`
+2. Run `python scripts/label_real_ads.py` — scores each ad and saves to `data/labeled/real_ads_labeled.csv`
+3. Run `python scripts/train_model.py` — retrains models on the new data
 
 ## Testing
 
@@ -108,25 +108,32 @@ Python 3.11 · scikit-learn · XGBoost · FastAPI · Anthropic Claude API · Rea
 python -m pytest tests/ -v
 ```
 
-3 tests covering the `/score` endpoint: valid response shape, input validation (empty string → 422), and dimension key completeness. Claude API calls are mocked so tests run without API keys.
+6 tests covering: valid response shape, input validation, dimension completeness, e-commerce profitability math, lead gen profitability math, and no-inputs fallback.
+
+## Tech Stack
+
+Python 3.11 · scikit-learn · XGBoost · FastAPI · Anthropic Claude API · React · Vite · pytest
 
 ## Project Structure
 
 ```
 app/
-  main.py              # FastAPI backend — /score endpoint, retry logic
+  main.py              # FastAPI backend — /score endpoint, profitability math, retry logic
 scripts/
-  label_ads.py         # Two-call labeling pipeline (generate + score)
-  train_model.py       # Trains RF + XGBoost, generates metrics + charts
+  label_real_ads.py    # Context-aware labeling pipeline for real ad transcripts
+  train_model.py       # Trains RF + XGBoost on 12 features, generates metrics + charts
 prompts/
-  hormozi_brain.md     # Expert persona system prompt
+  hormozi_brain.md     # Expert persona system prompt (context-relative scoring)
   scoring_rubric.md    # Scoring schema reference
 models/
   ad_scorer_rf.pkl     # Trained Random Forest
-  ad_scorer_xgb.pkl   # Trained XGBoost
+  ad_scorer_xgb.pkl    # Trained XGBoost
 data/
-  labeled/             # LLM-labeled training data (90 ads)
+  raw/                 # Real ad transcripts (input)
+  labeled/             # Scored training data (output)
   processed/           # Metrics JSON, feature importance + comparison charts
 frontend/
-  src/App.jsx          # React UI — input, three-score display, dimension bars
+  src/App.jsx          # React UI — business inputs, verdict, profitability, dimensions
+tests/
+  test_api.py          # API endpoint tests with mocked Claude
 ```

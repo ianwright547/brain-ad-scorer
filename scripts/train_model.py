@@ -9,17 +9,60 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import joblib
 import json
+import os
 
-df = pd.read_csv("data/labeled/ads_labeled.csv")
-
-features = [
+SCORE_FEATURES = [
     'hook_power', 'offer_strength', 'persuasion_depth', 'narrative_emotion',
     'structure_flow', 'cta_clarity', 'audience_targeting', 'funnel_fit',
-    'platform_optimization'
+    'platform_optimization', 'conversion_likelihood', 'message_market_match',
+    'ad_type_execution',
 ]
 
-X = df[features]
-y = df['overall_impact']
+TARGET = 'overall_impact'
+
+# Load real ads (new format with 12 features + context)
+real_path = "data/labeled/real_ads_labeled.csv"
+legacy_path = "data/labeled/ads_labeled.csv"
+
+frames = []
+
+if os.path.exists(real_path):
+    real_df = pd.read_csv(real_path)
+    print(f"Real ads: {len(real_df)} rows")
+    frames.append(real_df)
+
+if os.path.exists(legacy_path):
+    legacy_df = pd.read_csv(legacy_path)
+    # Legacy data has 9 features — fill new dimensions with NaN
+    for col in SCORE_FEATURES:
+        if col not in legacy_df.columns:
+            legacy_df[col] = np.nan
+    print(f"Legacy synthetic ads: {len(legacy_df)} rows")
+    frames.append(legacy_df)
+
+if not frames:
+    print("No training data found. Run label_real_ads.py first.")
+    exit()
+
+df = pd.concat(frames, ignore_index=True)
+print(f"Total dataset: {len(df)} rows")
+
+# Drop rows missing new features (legacy data without the 3 new dimensions)
+df_full = df.dropna(subset=SCORE_FEATURES + [TARGET])
+print(f"Rows with all 12 features: {len(df_full)}")
+
+if len(df_full) < 20:
+    print("\nNot enough data with all 12 features. Falling back to 9-feature training.")
+    SCORE_FEATURES = [
+        'hook_power', 'offer_strength', 'persuasion_depth', 'narrative_emotion',
+        'structure_flow', 'cta_clarity', 'audience_targeting', 'funnel_fit',
+        'platform_optimization',
+    ]
+    df_full = df.dropna(subset=SCORE_FEATURES + [TARGET])
+    print(f"Rows with 9 features: {len(df_full)}")
+
+X = df_full[SCORE_FEATURES].astype(float)
+y = df_full[TARGET].astype(float)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -30,14 +73,13 @@ xgb = XGBRegressor(n_estimators=100, learning_rate=0.1, max_depth=4, random_stat
 xgb.fit(X_train, y_train)
 
 # --- 5-Fold Cross-Validation ---
-print("=== 5-Fold Cross-Validation ===")
+print("\n=== 5-Fold Cross-Validation ===")
 
 rf_cv_mae = cross_val_score(rf, X, y, cv=5, scoring='neg_mean_absolute_error')
 rf_cv_r2 = cross_val_score(rf, X, y, cv=5, scoring='r2')
 xgb_cv_mae = cross_val_score(xgb, X, y, cv=5, scoring='neg_mean_absolute_error')
 xgb_cv_r2 = cross_val_score(xgb, X, y, cv=5, scoring='r2')
 
-# neg_mean_absolute_error returns negative values; flip sign for display
 rf_cv_mae_vals = -rf_cv_mae
 xgb_cv_mae_vals = -xgb_cv_mae
 
@@ -64,6 +106,9 @@ print(f"\nRandom Forest agreed with Claude within 1 point on {within_1:.0f}% of 
 print(f"Random Forest agreed with Claude within 0.5 points on {within_05:.0f}% of test ads")
 
 metrics = {
+    "features_used": len(SCORE_FEATURES),
+    "feature_names": SCORE_FEATURES,
+    "total_samples": len(df_full),
     "random_forest": {"mae": round(rf_mae, 3), "r2": round(rf_r2, 3)},
     "xgboost": {"mae": round(xgb_mae, 3), "r2": round(xgb_r2, 3)},
     "cross_validation": {
@@ -89,14 +134,14 @@ metrics = {
 with open("data/processed/metrics.json", "w") as f:
     json.dump(metrics, f, indent=2)
 
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
-rf_imp = pd.Series(rf.feature_importances_, index=features).sort_values()
+rf_imp = pd.Series(rf.feature_importances_, index=SCORE_FEATURES).sort_values()
 rf_imp.plot(kind='barh', ax=axes[0], color='#0969da')
 axes[0].set_title('Random Forest — Feature Importance', fontsize=12, fontweight='bold')
 axes[0].set_xlabel('Importance')
 
-xgb_imp = pd.Series(xgb.feature_importances_, index=features).sort_values()
+xgb_imp = pd.Series(xgb.feature_importances_, index=SCORE_FEATURES).sort_values()
 xgb_imp.plot(kind='barh', ax=axes[1], color='#cf222e')
 axes[1].set_title('XGBoost — Feature Importance', fontsize=12, fontweight='bold')
 axes[1].set_xlabel('Importance')
@@ -123,7 +168,9 @@ plt.tight_layout()
 plt.savefig('data/processed/model_comparison.png', dpi=150, bbox_inches='tight')
 print("Model comparison chart saved to data/processed/model_comparison.png")
 
-joblib.dump(rf, 'models/ad_scorer_rf.pkl')
-joblib.dump(xgb, 'models/ad_scorer_xgb.pkl')
-joblib.dump(rf, 'models/ad_scorer.pkl')
+# Save with feature list metadata so backend knows what to expect
+model_meta = {"features": SCORE_FEATURES}
+joblib.dump({"model": rf, "meta": model_meta}, 'models/ad_scorer_rf.pkl')
+joblib.dump({"model": xgb, "meta": model_meta}, 'models/ad_scorer_xgb.pkl')
 print("\nModels saved to models/")
+print(f"Training complete. {len(SCORE_FEATURES)} features used.")
