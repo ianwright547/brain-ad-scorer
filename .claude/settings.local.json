@@ -13,7 +13,12 @@
       "Bash(javac --version)",
       "Bash(venv\\\\Scripts\\\\pip install *)",
       "PowerShell(.\\\\venv\\\\Scripts\\\\pip install fastapi uvicorn 2>&1 | Select-Object -Last 5)",
-      "PowerShell(.\\\\venv\\\\Scripts\\\\pip install \"uvicorn[standard]\" 2>&1 | Select-Object -Last 3)"
+      "PowerShell(.\\\\venv\\\\Scripts\\\\pip install \"uvicorn[standard]\" 2>&1 | Select-Object -Last 3)",
+      "PowerShell(.\\\\venv\\\\Scripts\\\\pip install xgboost 2>&1 | Select-Object -Last 3)",
+      "PowerShell(& \".\\\\venv\\\\Scripts\\\\pip.exe\" install xgboost 2>&1 | Select-Object -Last 3)",
+      "Bash(powershell -Command \"\\(Get-Content data/labeled/ads_labeled.csv | Measure-Object -Line\\).Lines\")",
+      "Bash(python -c \"import pandas as pd; df = pd.read_csv\\('data/labeled/ads_labeled.csv'\\); print\\(f'Total ads: {len\\(df\\)}'\\); print\\(f'\\\\nQuality tiers:\\\\n{df[\\\\\"quality_tier\\\\\"].value_counts\\(\\)}'\\); print\\(f'\\\\nBusiness types:\\\\n{df[\\\\\"business_type\\\\\"].value_counts\\(\\)}'\\); print\\(f'\\\\nAudience temps:\\\\n{df[\\\\\"audience_temperature\\\\\"].value_counts\\(\\)}'\\); print\\(f'\\\\nOverall impact stats:\\\\n{df[\\\\\"overall_impact\\\\\"].describe\\(\\)}'\\)\")",
+      "Bash(.\\\\venv\\\\Scripts\\\\python.exe -c \"import pandas as pd; df = pd.read_csv\\('data/labeled/ads_labeled.csv'\\); print\\(f'Total ads: {len\\(df\\)}'\\); print\\(f'\\\\nQuality tiers:\\\\n{df[\\\\\"quality_tier\\\\\"].value_counts\\(\\)}'\\); print\\(f'\\\\nBusiness types:\\\\n{df[\\\\\"business_type\\\\\"].value_counts\\(\\)}'\\); print\\(f'\\\\nAudience temps:\\\\n{df[\\\\\"audience_temperature\\\\\"].value_counts\\(\\)}'\\); print\\(f'\\\\nOverall impact stats:\\\\n{df[\\\\\"overall_impact\\\\\"].describe\\(\\)}'\\)\")"
     ]
   }
 }
