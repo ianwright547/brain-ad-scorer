@@ -1,0 +1,9 @@
+venv/
+.env
+__pycache__/
+.git/
+.claude/
+frontend/node_modules/
+frontend/dist/
+notebooks/
+.pytest_cache/
