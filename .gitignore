@@ -24,6 +24,10 @@ data/raw/*.json
 # Claude Code
 .claude/
 
+# Personal notes
+demo_script.txt
+my_learning_guide.html
+
 # OS
 .DS_Store
 Thumbs.db
