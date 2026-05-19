@@ -31,7 +31,7 @@ React frontend (JavaScript):
 ```
 
 **Deploy:**
-- Backend → Render (free tier, deploys from GitHub)
+- Backend → Fly.io (free tier, deploys via `flyctl` CLI)
 - Frontend → Vercel (free tier, deploys from GitHub)
 
 **User has zero JS experience** — explain JS concepts as they come up, focus on how things connect not syntax.
