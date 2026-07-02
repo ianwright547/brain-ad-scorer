@@ -4,6 +4,68 @@ Updated after every step. Use this to review what was built and why.
 
 ---
 
+## Phase 5: v2 — Local Analysis Engines, Caching, Image Scoring, CI
+
+### What changed and why
+
+The v1 pipeline was: Claude scores dimensions → model predicts overall impact. The fair
+criticism: everything interesting happened inside an API call. v2 adds engineering that
+runs locally and deterministically, so the project demonstrates algorithms, not just glue.
+
+### analysis/text_features.py — the pre-flight engine
+
+Pure Python, no API. Computes:
+- **Flesch Reading Ease / Flesch-Kincaid Grade** — both formulas combine words-per-sentence
+  and syllables-per-word with published coefficients. The syllable counter is hand-written:
+  count contiguous vowel groups, subtract trailing silent 'e', minimum of one.
+- **Lexicon matching** — small curated sets of power words, urgency words, CTA verbs, and
+  risk-reversal phrases. Curated beats scraped: every entry earns its place.
+- **Specificity detection** — regex for money amounts, percentages, timeframes. Concrete
+  numbers are a known conversion signal; vague claims aren't.
+
+Why it matters architecturally: it's free and instant, so it runs *before* the paid LLM
+call — the same pattern as running a linter before CI.
+
+### analysis/image_features.py — the creative inspector
+
+Takes raw image bytes, computes real computer-vision metrics with numpy:
+- **Laplacian variance** (blur detection), **Sobel edge density** (visual busyness) — both
+  via a hand-rolled 3x3 convolution using shifted array views instead of loops.
+- **RMS contrast**, **BT.601 luma brightness**, **Hasler-Süsstrunk colorfulness** (the
+  published metric for perceived colorfulness).
+- **Magic-byte format sniffing** — identify PNG/JPEG/GIF/WebP from file signatures instead
+  of trusting extensions. Security habit, not just correctness.
+
+Claude vision handles the *semantic* scoring of creatives (same 12 dimensions); the local
+metrics answer the mechanical questions.
+
+### app/db.py — content-addressed caching
+
+Cache key = SHA-256(prompt-version + exact input). Two consequences:
+1. Identical input never triggers a second API call — repeat scores are instant and free.
+2. Editing the persona prompt changes the version hash, which invalidates every old entry
+   automatically. Cache invalidation designed away instead of managed.
+
+Plus a history table — every evaluation is persisted and served by `GET /history`.
+
+### Model evaluation upgrades
+
+- **Baselines**: dummy mean-predictor (the floor) and linear regression. If RF can't beat
+  linear, the relationship is just a weighted sum and trees are wasted complexity. It does
+  beat it (CV MAE 0.46 vs 0.68) — the weighting is genuinely non-linear.
+- **Permutation importance** replaces impurity importance: shuffle one feature on held-out
+  data, measure how much the error grows. More honest, computed on data the model never
+  trained on.
+
+### Engineering hygiene
+
+- 33 tests. The deterministic modules get real unit tests (known syllable counts, generated
+  checkerboard/solid test images with known properties). API tests mock the Claude call.
+- GitHub Actions CI: ruff + pytest on every push.
+- Lazy API client: the app boots with no key; only `/score` cache-misses need one.
+
+---
+
 ## Phase 1: Brain Profile + Data (in progress)
 
 ### Steps 1.1 + 1.2 — Reference Material + Expert Persona Prompt ✅
