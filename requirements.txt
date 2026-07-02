@@ -7,6 +7,9 @@ scikit-learn
 xgboost
 joblib
 
+# Image analysis
+pillow
+
 # Visualization
 matplotlib
 
