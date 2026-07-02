@@ -17,6 +17,11 @@ env/
 data/raw/*.csv
 data/raw/*.json
 
+# Local runtime state
+data/scorer.db
+.pytest_cache/
+.ruff_cache/
+
 # IDE
 .vscode/
 .idea/
