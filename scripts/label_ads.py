@@ -123,6 +123,6 @@ for i, quality_tier in enumerate(QUALITY_TIERS):
         saved_count += 1
         print(f"  → overall_impact: {row['overall_impact']} | verdict: {row['verdict']}")
     else:
-        print(f"  → Skipped (parse error)")
+        print("  → Skipped (parse error)")
 
 print(f"\nDone. {saved_count} ads saved to {output_path}")

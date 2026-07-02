@@ -15,31 +15,56 @@
     "ad_type_execution"
   ],
   "total_samples": 30,
-  "random_forest": {
-    "mae": 0.313,
-    "r2": 0.882
-  },
-  "xgboost": {
-    "mae": 0.345,
-    "r2": 0.752
-  },
-  "cross_validation": {
-    "folds": 5,
+  "train_size": 24,
+  "test_size": 6,
+  "models": {
+    "dummy_mean": {
+      "cv_mae_mean": 1.533,
+      "cv_mae_std": 0.417,
+      "cv_r2_mean": -0.791,
+      "cv_r2_std": 0.78,
+      "holdout_mae": 1.278,
+      "holdout_r2": -0.96
+    },
+    "linear": {
+      "cv_mae_mean": 0.679,
+      "cv_mae_std": 0.318,
+      "cv_r2_mean": 0.569,
+      "cv_r2_std": 0.412,
+      "holdout_mae": 0.325,
+      "holdout_r2": 0.842
+    },
     "random_forest": {
-      "mae_mean": 0.455,
-      "mae_std": 0.156,
-      "r2_mean": 0.856,
-      "r2_std": 0.1
+      "cv_mae_mean": 0.455,
+      "cv_mae_std": 0.156,
+      "cv_r2_mean": 0.856,
+      "cv_r2_std": 0.1,
+      "holdout_mae": 0.313,
+      "holdout_r2": 0.882
     },
     "xgboost": {
-      "mae_mean": 0.523,
-      "mae_std": 0.053,
-      "r2_mean": 0.743,
-      "r2_std": 0.169
+      "cv_mae_mean": 0.523,
+      "cv_mae_std": 0.053,
+      "cv_r2_mean": 0.743,
+      "cv_r2_std": 0.169,
+      "holdout_mae": 0.345,
+      "holdout_r2": 0.752
     }
   },
   "agreement_within_1pt": 100.0,
   "agreement_within_0.5pt": 83.3,
-  "test_size": 6,
-  "train_size": 24
+  "permutation_importance": {
+    "offer_strength": -0.0038,
+    "platform_optimization": -0.0013,
+    "narrative_emotion": -0.0001,
+    "hook_power": 0.0158,
+    "message_market_match": 0.0204,
+    "cta_clarity": 0.0237,
+    "funnel_fit": 0.0316,
+    "persuasion_depth": 0.0447,
+    "ad_type_execution": 0.0456,
+    "structure_flow": 0.0593,
+    "audience_targeting": 0.1326,
+    "conversion_likelihood": 0.1523
+  }
 }
