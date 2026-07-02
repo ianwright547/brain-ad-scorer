@@ -130,7 +130,7 @@ for i, ad_copy in enumerate(ads[start_from:], start=start_from):
         scored += 1
         print(f"  overall_impact: {row['overall_impact']} | verdict: {row['verdict']} | niche: {row.get('niche', '?')}")
     else:
-        print(f"  Skipped (parse error)")
+        print("  Skipped (parse error)")
 
 print(f"\nDone. {scored} real ads scored and saved to {output_path}")
 print(f"Total real ads labeled: {start_from + scored}")
