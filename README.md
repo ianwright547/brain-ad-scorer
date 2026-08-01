@@ -44,7 +44,7 @@ Scores, weaknesses, fixes, and a verdict out
 
 ```bash
 # backend
-git clone https://github.com/ianwright27/brain-ad-scorer.git
+git clone https://github.com/ianwright547/brain-ad-scorer.git
 cd brain-ad-scorer
 python -m venv venv
 source venv/bin/activate  # Windows: .\venv\Scripts\activate

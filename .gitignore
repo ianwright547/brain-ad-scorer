@@ -21,8 +21,10 @@ data/raw/*.json
 .vscode/
 .idea/
 
-# Claude Code
+# Local tooling
 .claude/
+CLAUDE.md
+NOTES.md
 
 # Personal notes
 demo_script.txt
